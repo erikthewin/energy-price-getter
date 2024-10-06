@@ -25,12 +25,19 @@ def fetch_data():
     base_url = 'https://www.elprisenligenu.dk/api/v1/prices/'
     date_part = get_next_day_date()
     url = f"{base_url}{date_part}_DK2.json"
-    
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Error fetching data: {response.status_code}")
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            error_message = f"Couldn't get energy prices, error fetching data: {response.status_code}"
+            send_slack_message(error_message)
+            print(error_message)
+            return None
+    except requests.exceptions.RequestException as e:
+        error_message = f"Couldn't get energy prices, request failed: {str(e)}"
+        send_slack_message(error_message)
+        print(error_message)
         return None
     
 # Function to determine DKK_transport_per_kWh based on time of day
@@ -110,6 +117,18 @@ def insert_into_db(data):
     cursor.close()
     conn.close()
 
+# Slack Webhook URL from your environment variables
+SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
+
+def send_slack_message(message):
+    payload = {
+        "text": message
+    }
+    response = requests.post(SLACK_WEBHOOK_URL, json=payload)
+    if response.status_code != 200:
+        print(f"Failed to send message to Slack: {response.status_code}, {response.text}")
+
+
 # Main flow
 def main():
     afgift = 1.11  # Set this value as needed, as it changes less often
@@ -121,6 +140,7 @@ def main():
         print("Data processed and inserted successfully.")
         for entry in processed_data:
             print(entry)
-
+        send_slack_message(f"Energy prices for {get_next_day_date()} has been downloaded.")
+        
 if __name__ == "__main__":
     main()

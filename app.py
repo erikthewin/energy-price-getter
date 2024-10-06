@@ -61,7 +61,7 @@ def process_data(data, afgift):
         processed_entry = {
             'time_start': entry['time_start'],
             'time_end': entry['time_end'],
-            'DKK_per_kWh': round(entry['DKK_per_kWh'] * 1.25, 2),
+            'DKK_per_kWh': round(entry['DKK_per_kWh'] * 1.25, 2), # Adding "moms" here, Danish Taxes.
             'EUR_per_kWh': round(entry['EUR_per_kWh'], 2),
             'EXR': entry['EXR'],
             'DKK_transport_per_kWh': round(transport_rate, 2),  # Example value, adjust as needed
